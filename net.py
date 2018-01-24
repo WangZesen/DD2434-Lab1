@@ -132,9 +132,11 @@ class network:
 					lastDelta = np.zeros((self.config.outputD,))
 					outputs = self.forward(x[index])
 					for i in range(self.config.outputD):
-						lastDelta[i] = y[i] - outputs[i]
+						lastDelta[i] = (y[i] - outputs[i]) * self.config.activeDiff(self.values[self.config.layer - 1][i])
 					for i in range(self.layer)[::-1]:
-						pass
+						originV = np.zeros((self.config.nodes[i],))
+						for j in range(self.config.nodes[i]):
+							originV[j] = self.value[i]
 						
 			
 			
