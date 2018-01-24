@@ -64,35 +64,26 @@ class network:
 		self.values = []
 		self.inputData = []
 		for i in range(self.config.layer):
-			self.w.append([[np.random.normal(0, 5) for col in range(self.config.nodes[i])] for row in range(lastDim)])
-			self.values.append([0 for col in range(self.config.nodes[i])])
+			self.w.append(np.array([[np.random.normal(0, 5) for col in range(self.config.nodes[i])] for row in range(lastDim)]))
+			self.values.append(np.array([0 for col in range(self.config.nodes[i])]))
 			lastDim = self.config.nodes[i]
 	
 	def calError(self, x, y):
 		count = 0.
 		for i in range(len(x)):
-			if y[i] * self.forward(x[i]) <= 0:
+			if y[i] * self.forward(x[i])[0] <= 0:
 				count += 1
 		return count / len(x)
 	
 	def forward(self, inputData):
 		self.inputData = copy.deepcopy(inputData)
-		lastDim = self.inputD
-		for i in range(self.config.nodes[0]):
-			self.values[0][i] = 0
-			for j in range(lastDim):
-				self.values[0][i] += self.w[0][j][i] * self.inputData[j]
-			self.values[0][i] = self.config.active(self.values[0][i])
+		self.values[0] = np.dot(inputData, self.w[0])
 		lastDim = self.config.nodes[0]
 		for k in range(1, self.config.layer):
+			self.values[k] = np.dot(self.values[k - 1], self.w[k])
 			for i in range(self.config.nodes[k]):
-				self.values[k][i] = 0
-				for j in range(lastDim):
-					self.values[k][i] += self.values[k - 1][i] * self.w[k][j][i]
 				self.values[k][i] = self.config.active(self.values[k][i])
-			lastDim = self.config.nodes[k]
-		# print (self.w)
-		return self.values[self.config.layer - 1][0]
+		return self.values[self.config.layer - 1]
 
 	def backward(self, x, y):
 		assert(self.config.batch < len(y))
@@ -119,7 +110,7 @@ class network:
 				randomSamples = random.sample(range(len(x)), self.config.batch)
 				for b in range(self.config.batch):
 					index = randomSamples[b]
-					if self.forward(x[index]) * y[b] <= 0:
+					if self.forward(x[index])[0] * y[b] <= 0:
 						for i in range(self.config.inputD):
 							delta[i] += y[b] * x[b][i]
 				for i in range(self.config.inputD):
@@ -127,10 +118,24 @@ class network:
 				if it % data.CHECK_INTERVAL == 0:
 					trainProc.append(self.calError(x, y))
 		if self.config.mode == 2: # Back Propogation
-			lastDelta = []
-			for i in range(1):
-				pass
-			
+			for it in range(self.config.maxIter):
+				
+				delta = []
+				lastDim = self.inputD
+				for i in range(self.config.layer):
+					delta.append(np.zeros((lastDim, self.config.nodes[i])))
+					lastDim = self.config.nodes[i]
+					
+				randomSamples = random.sample(range(len(x)), self.config.batch)
+				for b in range(self.config.batch):
+					index = randomSample[b]
+					lastDelta = np.zeros((self.config.outputD,))
+					outputs = self.forward(x[index])
+					for i in range(self.config.outputD):
+						lastDelta[i] = y[i] - outputs[i]
+					for i in range(self.layer)[::-1]:
+						pass
+						
 			
 			
 		return trainProc
@@ -146,7 +151,7 @@ class network:
 		Z = [[0 for col in range(m)] for row in range(n)]
 		for i in range(n):
 			for j in range(m):
-				Z[i][j] = self.forward([X[i][j], Y[i][j]])
+				Z[i][j] = self.forward([X[i][j], Y[i][j]])[0]
 		#print (self.w)
 		plt.contour(X, Y, Z, [0])
 		plt.show()
@@ -158,7 +163,7 @@ if __name__ == "__main__":
 	x, y, c = data.createData(0)
 	Data = concate2D(x, y)
 	
-	'''
+	
 	# --- Experiment for 3.1 ---
 	config = netConfig()
 	config.set(inputD = 2, outputD = 1, layer = 1, nodes = [1], lr = 0.01, mode = 0, batch = 1, \
@@ -182,8 +187,9 @@ if __name__ == "__main__":
 	net1.draw()
 	
 	data.showTrainProc(2, [trainProc1, trainProc2], ["Delta Rule", "Perceptron Rule"])
-	'''
 	
+	
+	'''
 	# --- Experiment for 3.2 ---
 	config = netConfig()
 	config.set(inputD = 2, outputD = 1, layer = 2, nodes = [3, 1], lr = 0.01, mode = 2, batch = 1, \
@@ -193,3 +199,4 @@ if __name__ == "__main__":
 	data.scatter(x, y, c)
 	net.draw()
 	print (net.w)
+	'''
