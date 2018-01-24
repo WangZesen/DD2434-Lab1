@@ -1,9 +1,20 @@
-import numpy as np
-import random
 import matplotlib.pyplot as plt
+import random, math
+import numpy as np
 
+CHECK_INTERVAL = 5
 N = 100
 #np.random.seed(1000)
+
+def showTrainProc(n, results, labels):
+	x = []
+	for i in range(len(results[0])):
+		x.append(i * 5 + 1)
+		
+	for i in range(n):
+		plt.plot(x, results[i], label = labels[i])
+	plt.legend()
+	plt.show()
 
 def scatter(x, y, c):
 	colors = []
@@ -63,5 +74,6 @@ def createData(kind):
 # For debug
 if __name__ == "__main__":
 	x, y, c = createData(0)
-	scatter(x, y, c)
+	#scatter(x, y, c)
+	showTrainProc(2, [[1,2,3,4],[5,6,7,8]], ["line A", "line B"])
 

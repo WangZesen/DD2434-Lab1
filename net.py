@@ -1,21 +1,21 @@
 import numpy as np
-import copy
 import matplotlib.pyplot as plt
-import data, random
+import data, random, math, copy
+
 
 
 def noActive(x):
 	return x
 
 def noActiveDiff(x):
-	return 1
+	return 1.
 
 def active(x):
-	return 2 / (1 + e ** (- x)) - 1
+	return 2. / (1. + math.e ** (- x)) - 1.
 
 def activeDiff(x):
-	actived = 2 / (1 + e ** (- x)) - 1
-	return (1 + actived) * (1 - actived) / 2
+	actived = 2. / (1. + math.e ** (- x)) - 1.
+	return (1. + actived) * (1. - actived) / 2.
 
 def concate2D(x, y):
 	concatedData = [[0, 0] for i in range(len(x))]
@@ -26,12 +26,12 @@ def concate2D(x, y):
 
 class netConfig:
 	def __init__(self):
-		self.layer = 0
-		self.nodes = []
 		self.lr = 0
 		self.mode = 0 # 0: Delta, 1: Perceptron, 2: BP
 		self.batch = 0
+		self.layer = 0		
 		self.inputD = 0
+		self.nodes = []		
 		self.outputD = 0
 		self.maxIter = 0 
 		self.active = None
@@ -39,15 +39,16 @@ class netConfig:
 	
 	def set(self, inputD = None, outputD = None, layer = None, nodes = None, lr = None, mode = None, batch = None, 
 		maxIter = None, activeDiff = None, active = None):
-		self.maxIter = self.maxIter if maxIter == None else maxIter
-		self.active = self.active if active == None else active
+		
 		self.activeDiff = self.activeDiff if activeDiff == None else activeDiff
-		self.outputD = self.outputD if outputD == None else outputD	
+		self.maxIter = self.maxIter if maxIter == None else maxIter
+		self.outputD = self.outputD if outputD == None else outputD
+		self.active = self.active if active == None else active
 		self.inputD = self.inputD if inputD == None else inputD
 		self.layer = self.layer if layer == None else layer
 		self.nodes = self.nodes if nodes == None else nodes
-		self.batch = self.batch if batch == None else batch		
-		self.mode = self.mode if mode == None else mode		
+		self.batch = self.batch if batch == None else batch
+		self.mode = self.mode if mode == None else mode
 		self.lr = self.lr if lr == None else lr
 
 class network:
@@ -67,9 +68,16 @@ class network:
 			self.values.append([0 for col in range(self.config.nodes[i])])
 			lastDim = self.config.nodes[i]
 	
+	def calError(self, x, y):
+		count = 0.
+		for i in range(len(x)):
+			if y[i] * self.forward(x[i]) <= 0:
+				count += 1
+		return count / len(x)
+	
 	def forward(self, inputData):
 		self.inputData = copy.deepcopy(inputData)
-		lastDim = 2
+		lastDim = self.inputD
 		for i in range(self.config.nodes[0]):
 			self.values[0][i] = 0
 			for j in range(lastDim):
@@ -81,11 +89,14 @@ class network:
 				self.values[k][i] = 0
 				for j in range(lastDim):
 					self.values[k][i] += self.values[k - 1][i] * self.w[k][j][i]
-			self.values[k][i] = self.config.active(self.values[k][i])					
+				self.values[k][i] = self.config.active(self.values[k][i])
+			lastDim = self.config.nodes[k]
+		# print (self.w)
 		return self.values[self.config.layer - 1][0]
 
 	def backward(self, x, y):
 		assert(self.config.batch < len(y))
+		trainProc = []
 		if self.config.mode == 0: # Delta rule (only for one layer and one output)
 			for it in range(self.config.maxIter):
 				delta = [0 for col in range(self.config.inputD)]
@@ -100,6 +111,8 @@ class network:
 						delta[i] += count
 				for i in range(self.config.inputD):
 					self.w[0][i][0] += delta[i]
+				if it % data.CHECK_INTERVAL == 0:
+					trainProc.append(self.calError(x, y))
 		if self.config.mode == 1: # Perceptron rule (only for one layer and one output)
 			for it in range(self.config.maxIter):
 				delta = [0 for col in range(self.config.inputD)]
@@ -111,6 +124,16 @@ class network:
 							delta[i] += y[b] * x[b][i]
 				for i in range(self.config.inputD):
 					self.w[0][i][0] += delta[i]
+				if it % data.CHECK_INTERVAL == 0:
+					trainProc.append(self.calError(x, y))
+		if self.config.mode == 2: # Back Propogation
+			lastDelta = []
+			for i in range(1):
+				pass
+			
+			
+			
+		return trainProc
 				
 	def draw(self):
 		# data.scatter(x, y, c)
@@ -133,18 +156,40 @@ class network:
 if __name__ == "__main__":
 
 	x, y, c = data.createData(0)
-	
 	Data = concate2D(x, y)
 	
+	'''
+	# --- Experiment for 3.1 ---
 	config = netConfig()
-	config.set(inputD = 2, outputD = 1, layer = 1, nodes = [1], lr = 0.01, mode = 1, batch = 1, \
+	config.set(inputD = 2, outputD = 1, layer = 1, nodes = [1], lr = 0.01, mode = 0, batch = 1, \
 	maxIter = 100, active = noActive, activeDiff = noActiveDiff)
 	
-	net = network(config)
-	
+	# Delta Rule	
+	net = network(config)	
 	data.scatter(x, y, c)
 	net.draw()
-	
-	net.backward(Data, c)
+	trainProc1 = net.backward(Data, c)
 	data.scatter(x, y, c)
 	net.draw()	
+	
+	# Perceptron Rule
+	config.set(mode = 1)
+	net1 = network(config)
+	data.scatter(x, y, c)
+	net1.draw()
+	trainProc2 = net1.backward(Data, c)
+	data.scatter(x, y, c)
+	net1.draw()
+	
+	data.showTrainProc(2, [trainProc1, trainProc2], ["Delta Rule", "Perceptron Rule"])
+	'''
+	
+	# --- Experiment for 3.2 ---
+	config = netConfig()
+	config.set(inputD = 2, outputD = 1, layer = 2, nodes = [3, 1], lr = 0.01, mode = 2, batch = 1, \
+	maxIter = 100, active = active, activeDiff = activeDiff)
+	
+	net = network(config)
+	data.scatter(x, y, c)
+	net.draw()
+	print (net.w)
