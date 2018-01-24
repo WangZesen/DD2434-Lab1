@@ -8,7 +8,7 @@ np.random.seed(1000)
 def scatter(x, y, c):
 	colors = []
 	for i in range(len(c)):
-		if c[i] == 0:
+		if c[i] == -1:
 			colors.append('r')
 		else:
 			colors.append('b')
@@ -27,7 +27,7 @@ def createData(kind):
 		for i in range(N):
 			x.append(np.random.normal(-5, 2))
 			y.append(np.random.normal(5, 2))
-			c.append(0)
+			c.append(-1)
 			x.append(np.random.normal(5, 2))
 			y.append(np.random.normal(-5, 2))
 			c.append(1)
@@ -40,7 +40,7 @@ def createData(kind):
 				if temX > 3 and temY > 3:
 					x.append(temX)
 					y.append(temY)
-					c.append(0)
+					c.append(-1)
 					break
 			while True:
 				temX = np.random.normal(0, 10)
@@ -60,6 +60,7 @@ def createData(kind):
 
 	return x, y, c
 
+# For debug
 if __name__ == "__main__":
 	x, y, c = createData(1)
 	scatter(x, y, c)
