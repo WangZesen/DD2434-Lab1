@@ -3,17 +3,17 @@ import random
 import matplotlib.pyplot as plt
 
 N = 100
-np.random.seed(1000)
+#np.random.seed(1000)
 
 def scatter(x, y, c):
 	colors = []
 	for i in range(len(c)):
 		if c[i] == -1:
-			colors.append('r')
+			colors.append('red')
 		else:
-			colors.append('b')
-	plt.scatter(x, y, c = colors, s = 3)
-	plt.show()
+			colors.append('blue')
+	#print (colors)
+	plt.scatter(x, y, c = colors, s = 15)
 
 def createData(kind):
 	x = []
@@ -62,5 +62,6 @@ def createData(kind):
 
 # For debug
 if __name__ == "__main__":
-	x, y, c = createData(1)
+	x, y, c = createData(0)
 	scatter(x, y, c)
+
