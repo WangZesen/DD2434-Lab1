@@ -64,7 +64,7 @@ class network:
 		self.values = []
 		self.inputData = []
 		for i in range(self.config.layer):
-			self.w.append(np.array([[np.random.normal(0, 5) for col in range(self.config.nodes[i])] for row in range(lastDim)]))
+			self.w.append(np.array([[np.random.normal(0, 1) for col in range(self.config.nodes[i])] for row in range(lastDim)]))
 			self.values.append(np.array([0 for col in range(self.config.nodes[i])]))
 			lastDim = self.config.nodes[i]
 	
@@ -121,25 +121,49 @@ class network:
 			for it in range(self.config.maxIter):
 				
 				delta = []
-				lastDim = self.inputD
+				lastDim = self.config.inputD
 				for i in range(self.config.layer):
 					delta.append(np.zeros((lastDim, self.config.nodes[i])))
 					lastDim = self.config.nodes[i]
-					
+				
+				
+				'''	
 				randomSamples = random.sample(range(len(x)), self.config.batch)
 				for b in range(self.config.batch):
-					index = randomSample[b]
+					# Deal with last layer
+					index = randomSamples[b]
 					lastDelta = np.zeros((self.config.outputD,))
 					outputs = self.forward(x[index])
 					for i in range(self.config.outputD):
-						lastDelta[i] = (y[i] - outputs[i]) * self.config.activeDiff(self.values[self.config.layer - 1][i])
-					for i in range(self.layer)[::-1]:
-						originV = np.zeros((self.config.nodes[i],))
+						lastDelta[i] = (y[index] - outputs[i]) * self.config.activeDiff(self.values[self.config.layer - 1][i])
+					#print (lastDelta)
+					for i in range(1, self.config.layer)[::-1]:
+						originV = np.zeros((self.config.nodes[i - 1],))
 						for j in range(self.config.nodes[i]):
-							originV[j] = self.value[i]
-						
-			
-			
+							originV[j] = self.config.activeDiff(self.values[i - 1][j])
+						adjustW = np.dot(np.array([originV]).T, np.array([lastDelta]))
+						delta[i] = delta[i] - self.config.lr * adjustW
+						if i > 1:
+							curDelta = np.zeros((self.config.nodes[i - 2],))
+							for j in range(self.config.nodes[i - 2]):
+								curDelta[j] = self.config.activeDiff(self.values[i - 2][j])
+							curDelta = curDelta * np.dot(self.w[i - 1], np.array([lastDelta]).T).T.reshape((self.config.nodes[i - 2],))
+							lastDelta = curDelta
+							
+					curDelta = np.zeros((self.config.inputD,))
+					for j in range(self.config.inputD):
+						curDelta[j] = self.config.activeDiff(self.values[0][j])
+					curDelta = curDelta * np.dot(self.w[0], np.array([lastDelta]).T).T.reshape((self.config.inputD,))
+					lastDelta = curDelta
+					
+					originV = np.zeros((self.config.inputD,))
+					for j in range(self.config.inputD):
+						originV[j] = self.config.activeDiff(self.values[0][j])
+					delta[0] = delta[0] - self.config.lr * np.dot(np.array([originV]).T, np.array([lastDelta]))
+				#print (delta)
+				for i in range(self.config.layer):
+					self.w[i] = self.w[i] + delta[i]
+				'''
 		return trainProc
 				
 	def draw(self):
@@ -165,7 +189,7 @@ if __name__ == "__main__":
 	x, y, c = data.createData(0)
 	Data = concate2D(x, y)
 	
-	
+	'''
 	# --- Experiment for 3.1 ---
 	config = netConfig()
 	config.set(inputD = 2, outputD = 1, layer = 1, nodes = [1], lr = 0.01, mode = 0, batch = 1, \
@@ -189,9 +213,9 @@ if __name__ == "__main__":
 	net1.draw()
 	
 	data.showTrainProc(2, [trainProc1, trainProc2], ["Delta Rule", "Perceptron Rule"])
-	
-	
 	'''
+	
+	
 	# --- Experiment for 3.2 ---
 	config = netConfig()
 	config.set(inputD = 2, outputD = 1, layer = 2, nodes = [3, 1], lr = 0.01, mode = 2, batch = 1, \
@@ -201,4 +225,9 @@ if __name__ == "__main__":
 	data.scatter(x, y, c)
 	net.draw()
 	print (net.w)
-	'''
+	
+	net.backward(Data, c)
+	data.scatter(x, y, c)
+	net.draw()
+	print (net.w)
+	
