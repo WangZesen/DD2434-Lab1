@@ -70,7 +70,7 @@ class network:
 		self.inputData = []		
 		self.inactiveValues = []
 		for i in range(self.config.layer):
-			self.w.append(np.array([[np.random.normal(0, 1.0) for col in range(self.config.nodes[i])] for row in range(lastDim)]))
+			self.w.append(np.array([[np.random.normal(0, 0.5) for col in range(self.config.nodes[i])] for row in range(lastDim)]))
 			self.values.append(np.array([0 for col in range(self.config.nodes[i])]))
 			self.inactiveValues.append(np.array([0 for col in range(self.config.nodes[i])]))			
 			lastDim = self.config.nodes[i]
@@ -170,7 +170,7 @@ class network:
 						print (curDim)
 						print (self.config.nodes[i])
 						'''
-						adjustW = - self.config.lr * np.dot(np.array([curValue]).T, np.array([lastDelta])).reshape((curDim, self.config.nodes[i]))
+						adjustW = - self.config.lr * np.dot(np.array([curValue]).T, np.array([lastDelta])).T.reshape((curDim, self.config.nodes[i]))
 						delta[i] = delta[i] + adjustW
 						curDelta = np.zeros((curDim,))
 						for j in range(curDim):
@@ -179,9 +179,9 @@ class network:
 				if it % data.CHECK_INTERVAL == 0:
 					trainProc.append(self.calError(x, y))
 				for i in range(self.config.layer):
-					self.w[i] = self.w[i] + delta[i]
+					self.w[i] = self.w[i] + delta[i] / self.config.batch #* 0.1 ** (it // 100)
 		return trainProc
-				
+		
 	def draw(self):
 		# data.scatter(x, y, c)
 		delta = 0.05
@@ -234,9 +234,9 @@ if __name__ == "__main__":
 	
 	# --- Experiment for 3.2 ---
 	config = netConfig()
-	config.set(inputD = 2, outputD = 1, layer = 3, nodes = [3, 3, 1], lr = 0.001, mode = 2, batch = 1, \
-	maxIter = 1000, active = active, activeDiff = activeDiff, activeInv = activeInv)
-
+	config.set(inputD = 2, outputD = 1, layer = 3, nodes = [3, 3, 1], lr = 0.001, mode = 2, batch = 3, \
+	maxIter = 10000, active = active, activeDiff = activeDiff, activeInv = activeInv)
+	
 	print (activeInv(config.active(10.)))
 	
 	net = network(config)
