@@ -13,6 +13,9 @@ def noActiveDiff(x):
 def active(x):
 	return 2. / (1. + math.e ** (- x)) - 1.
 
+def activeInv(x):
+	return - math.log(1. / (x + 1.) * 2 - 1.)
+
 def activeDiff(x):
 	actived = 2. / (1. + math.e ** (- x)) - 1.
 	return (1. + actived) * (1. - actived) / 2.
@@ -35,12 +38,14 @@ class netConfig:
 		self.outputD = 0
 		self.maxIter = 0 
 		self.active = None
+		self.activeInv = None
 		self.activeDiff = None
 	
 	def set(self, inputD = None, outputD = None, layer = None, nodes = None, lr = None, mode = None, batch = None, 
-		maxIter = None, activeDiff = None, active = None):
+		maxIter = None, activeDiff = None, active = None, activeInv = None):
 		
 		self.activeDiff = self.activeDiff if activeDiff == None else activeDiff
+		self.activeInv = self.activeInv if activeInv == None else activeInv
 		self.maxIter = self.maxIter if maxIter == None else maxIter
 		self.outputD = self.outputD if outputD == None else outputD
 		self.active = self.active if active == None else active
@@ -62,10 +67,12 @@ class network:
 		self.config = copy.deepcopy(config)
 		self.w = []
 		self.values = []
-		self.inputData = []
+		self.inputData = []		
+		self.inactiveValues = []
 		for i in range(self.config.layer):
-			self.w.append(np.array([[np.random.normal(0, 1) for col in range(self.config.nodes[i])] for row in range(lastDim)]))
+			self.w.append(np.array([[np.random.normal(0, 1.0) for col in range(self.config.nodes[i])] for row in range(lastDim)]))
 			self.values.append(np.array([0 for col in range(self.config.nodes[i])]))
+			self.inactiveValues.append(np.array([0 for col in range(self.config.nodes[i])]))			
 			lastDim = self.config.nodes[i]
 	
 	def calError(self, x, y):
@@ -78,10 +85,14 @@ class network:
 	def forward(self, inputData):
 		self.inputData = copy.deepcopy(inputData)
 		self.values[0] = np.dot(inputData, self.w[0])
+		for i in range(self.config.nodes[0]):
+			self.inactiveValues[0][i] = self.values[0][i]
+			self.values[0][i] = self.config.active(self.values[0][i])
 		lastDim = self.config.nodes[0]
 		for k in range(1, self.config.layer):
 			self.values[k] = np.dot(self.values[k - 1], self.w[k])
 			for i in range(self.config.nodes[k]):
+				self.inactiveValues[k][i] = self.values[k][i]
 				self.values[k][i] = self.config.active(self.values[k][i])
 		return self.values[self.config.layer - 1]
 
@@ -119,58 +130,63 @@ class network:
 					trainProc.append(self.calError(x, y))
 		if self.config.mode == 2: # Back Propogation
 			for it in range(self.config.maxIter):
-				
 				delta = []
 				lastDim = self.config.inputD
 				for i in range(self.config.layer):
 					delta.append(np.zeros((lastDim, self.config.nodes[i])))
 					lastDim = self.config.nodes[i]
 				
-				
-				'''	
 				randomSamples = random.sample(range(len(x)), self.config.batch)
 				for b in range(self.config.batch):
-					# Deal with last layer
 					index = randomSamples[b]
-					lastDelta = np.zeros((self.config.outputD,))
-					outputs = self.forward(x[index])
-					for i in range(self.config.outputD):
-						lastDelta[i] = (y[index] - outputs[i]) * self.config.activeDiff(self.values[self.config.layer - 1][i])
-					#print (lastDelta)
-					for i in range(1, self.config.layer)[::-1]:
-						originV = np.zeros((self.config.nodes[i - 1],))
-						for j in range(self.config.nodes[i]):
-							originV[j] = self.config.activeDiff(self.values[i - 1][j])
-						adjustW = np.dot(np.array([originV]).T, np.array([lastDelta]))
-						delta[i] = delta[i] - self.config.lr * adjustW
-						if i > 1:
-							curDelta = np.zeros((self.config.nodes[i - 2],))
-							for j in range(self.config.nodes[i - 2]):
-								curDelta[j] = self.config.activeDiff(self.values[i - 2][j])
-							curDelta = curDelta * np.dot(self.w[i - 1], np.array([lastDelta]).T).T.reshape((self.config.nodes[i - 2],))
-							lastDelta = curDelta
-							
-					curDelta = np.zeros((self.config.inputD,))
-					for j in range(self.config.inputD):
-						curDelta[j] = self.config.activeDiff(self.values[0][j])
-					curDelta = curDelta * np.dot(self.w[0], np.array([lastDelta]).T).T.reshape((self.config.inputD,))
-					lastDelta = curDelta
+					self.forward(x[index])
 					
-					originV = np.zeros((self.config.inputD,))
-					for j in range(self.config.inputD):
-						originV[j] = self.config.activeDiff(self.values[0][j])
-					delta[0] = delta[0] - self.config.lr * np.dot(np.array([originV]).T, np.array([lastDelta]))
-				#print (delta)
+					# initialize delta in the last column
+					lastDelta = np.zeros((self.config.outputD,))
+					lastValue = self.values[self.config.layer - 1]
+					curInactiveValue = self.inactiveValues[self.config.layer - 1]
+					for i in range(self.config.outputD):
+						lastDelta[i] = self.config.activeDiff(curInactiveValue[i]) * (lastValue[i] - y[index])
+					#print (lastDelta)
+					# Update layer by layer
+					for i in range(self.config.layer)[::-1]:
+						# update layer i
+						curDim = 0
+						curValue = None
+						curInactiveValue = None
+						if i > 0:
+							curDim = self.config.nodes[i - 1]
+							curValue = self.values[i - 1]
+							curInactiveValue = self.inactiveValues[i - 1]
+						else:
+							curDim = self.config.inputD
+							curValue = x[b]
+							curInactiveValue = x[b]
+						'''
+						print ("Debug")
+						print (curValue.shape)
+						print (lastDelta.shape)
+						print (np.dot(np.array([curValue]).T, np.array([lastDelta])).shape)
+						print (curDim)
+						print (self.config.nodes[i])
+						'''
+						adjustW = - self.config.lr * np.dot(np.array([curValue]).T, np.array([lastDelta])).reshape((curDim, self.config.nodes[i]))
+						delta[i] = delta[i] + adjustW
+						curDelta = np.zeros((curDim,))
+						for j in range(curDim):
+							curDelta[j] = self.config.activeDiff(curInactiveValue[j])
+						lastDelta = curDelta * np.dot(self.w[i], np.array([lastDelta]).T).reshape((curDim,))
+				if it % data.CHECK_INTERVAL == 0:
+					trainProc.append(self.calError(x, y))
 				for i in range(self.config.layer):
 					self.w[i] = self.w[i] + delta[i]
-				'''
 		return trainProc
 				
 	def draw(self):
 		# data.scatter(x, y, c)
 		delta = 0.05
-		xRange = np.arange(-10.0, 10.0, delta)
-		yRange = np.arange(-10.0, 10.0, delta)
+		xRange = np.arange(-15.0, 15.0, delta)
+		yRange = np.arange(-15.0, 15.0, delta)
 		X, Y = np.meshgrid(xRange, yRange)
 		n = len(X)
 		m = len(X[0])
@@ -181,12 +197,12 @@ class network:
 		#print (self.w)
 		plt.contour(X, Y, Z, [0])
 		plt.show()
-	
+		
 
 		
 if __name__ == "__main__":
 
-	x, y, c = data.createData(0)
+	x, y, c = data.createData(1)
 	Data = concate2D(x, y)
 	
 	'''
@@ -218,16 +234,22 @@ if __name__ == "__main__":
 	
 	# --- Experiment for 3.2 ---
 	config = netConfig()
-	config.set(inputD = 2, outputD = 1, layer = 2, nodes = [3, 1], lr = 0.01, mode = 2, batch = 1, \
-	maxIter = 100, active = active, activeDiff = activeDiff)
+	config.set(inputD = 2, outputD = 1, layer = 3, nodes = [3, 3, 1], lr = 0.001, mode = 2, batch = 1, \
+	maxIter = 1000, active = active, activeDiff = activeDiff, activeInv = activeInv)
+
+	print (activeInv(config.active(10.)))
 	
 	net = network(config)
 	data.scatter(x, y, c)
 	net.draw()
 	print (net.w)
 	
-	net.backward(Data, c)
+	
+	
+	trainProc = net.backward(Data, c)
 	data.scatter(x, y, c)
 	net.draw()
 	print (net.w)
+	
+	data.showTrainProc(1, [trainProc], ['test'])
 	

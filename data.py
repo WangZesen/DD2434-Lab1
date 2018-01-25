@@ -46,23 +46,23 @@ def createData(kind):
 		# not linear seperable
 		for i in range(N):
 			while True:
-				temX = np.random.normal(0, 10)
-				temY = np.random.normal(0, 10)
+				temX = np.random.normal(0, 5)
+				temY = np.random.normal(0, 5)
 				if temX > 3 and temY > 3:
 					x.append(temX)
 					y.append(temY)
 					c.append(-1)
 					break
 			while True:
-				temX = np.random.normal(0, 10)
-				temY = np.random.normal(0, 10)
+				temX = np.random.normal(0, 5)
+				temY = np.random.normal(0, 5)
 				if temX < -3 or temY < -3:
 					x.append(temX)
 					y.append(temY)
 					c.append(1)
 					break
 	# shuffle
-	for i in range(10000):
+	for i in range(20000):
 		id1 = random.randint(0, 2 * N - 1)
 		id2 = random.randint(0, 2 * N - 1)
 		x[id1], x[id2] = x[id2], x[id1]
