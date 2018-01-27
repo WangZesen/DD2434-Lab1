@@ -2,19 +2,30 @@ import matplotlib.pyplot as plt
 import random, math
 import numpy as np
 
-CHECK_INTERVAL = 5
+CHECK_INTERVAL = 10
 N = 100
 #np.random.seed(1000)
 
 def showTrainProc(n, results, labels):
 	x = []
 	for i in range(len(results[0])):
-		x.append(i * 5 + 1)
+		x.append(i * CHECK_INTERVAL + 1)
 		
 	for i in range(n):
 		plt.plot(x, results[i], label = labels[i])
 	plt.legend()
 	plt.show()
+
+def scatter2(x, y):
+	colors = []
+	for i in range(len(y)):
+		if y[i] == -1:
+			colors.append('red')
+		else:
+			colors.append('blue')
+	#print (colors)
+	x = np.array(x).T.tolist()
+	plt.scatter(x[0], x[1], c = colors, s = 15)
 
 def scatter(x, y, c):
 	colors = []
@@ -48,7 +59,7 @@ def createData(kind):
 			while True:
 				temX = np.random.normal(0, 5)
 				temY = np.random.normal(0, 5)
-				if temX > 3 and temY > 3:
+				if (temX > 3 and temY > 3) or (temX < -3 and temY < -3):
 					x.append(temX)
 					y.append(temY)
 					c.append(-1)
@@ -56,11 +67,30 @@ def createData(kind):
 			while True:
 				temX = np.random.normal(0, 5)
 				temY = np.random.normal(0, 5)
-				if temX < -3 or temY < -3:
+				if (temX < -3 and temY > 3) or (temX > 3 and temY < -3):
 					x.append(temX)
 					y.append(temY)
 					c.append(1)
 					break
+	if kind == 2:
+		# not linear seperable
+		for i in range(N):
+			while True:
+				temX = np.random.normal(0, 5)
+				temY = np.random.normal(0, 5)
+				if (temX ** 2 + temY ** 2 < 10):
+					x.append(temX)
+					y.append(temY)
+					c.append(-1)
+					break
+			while True:
+				temX = np.random.normal(0, 5)
+				temY = np.random.normal(0, 5)
+				if (temX ** 2 + temY ** 2 > 30):
+					x.append(temX)
+					y.append(temY)
+					c.append(1)
+					break					
 	# shuffle
 	for i in range(20000):
 		id1 = random.randint(0, 2 * N - 1)
