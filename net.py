@@ -134,7 +134,7 @@ class network:
 						count = - self.config.lr * (count - y[index]) * x[index][i]
 						delta[i] += count
 				for i in range(self.config.inputD):
-					self.w[0][i][0] += delta[i]
+					self.w[0][i][0] += delta[i] / self.config.batch
 				if it % data.CHECK_INTERVAL == 0:
 					trainProc.append(self.calError(x, y))
 		if self.config.mode == 1: # Perceptron rule (only for one layer and one output)
@@ -147,7 +147,7 @@ class network:
 						for i in range(self.config.inputD):
 							delta[i] += y[b] * x[b][i]
 				for i in range(self.config.inputD):
-					self.w[0][i][0] += delta[i]
+					self.w[0][i][0] += delta[i] / self.config.batch
 				if it % data.CHECK_INTERVAL == 0:
 					trainProc.append(self.calError(x, y))
 		if self.config.mode == 2: # Back Propogation
