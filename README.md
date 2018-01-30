@@ -12,3 +12,6 @@ node20 overfit:https://drive.google.com/open?id=1wX7SDMRt1_EcU0hkF3-NTlpbaV_0c3w
 
 
 Gaussian node8: https://drive.google.com/drive/folders/1WiDy7F4eTk-JKhrI931NK4aSx_RCbfHQ?usp=sharing
+
+
+Report Link: https://docs.google.com/document/d/1ggUEHnVgY2K_w-bWZY8EfItA8TQBA5ONK5zwVTSpThA/edit?usp=sharing
