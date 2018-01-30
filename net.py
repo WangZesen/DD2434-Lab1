@@ -21,6 +21,12 @@ def activeDiff(x):
     return (1. + actived) * (1. - actived) / 2.
     #return actived * (1 - actived)
 
+def concate3D(x, y):
+    concatedData = [[0, 0, 1] for i in range(len(x))]
+    for i in range(len(x)):
+        concatedData[i][0] = x[i]
+        concatedData[i][1] = y[i]
+    return concatedData
 
 def concate2D(x, y):
     concatedData = [[0, 0] for i in range(len(x))]
@@ -226,7 +232,7 @@ class network:
         Z = [[0 for col in range(m)] for row in range(n)]
         for i in range(n):
             for j in range(m):
-                Z[i][j] = self.forward([X[i][j], Y[i][j]])[0]
+                Z[i][j] = self.forward([X[i][j], Y[i][j], 1])[0]
                 '''
                 if (Z[i][j] > 0):
                     plt.plot([X[i][j]], [Y[i][j]], 'ro')
@@ -244,12 +250,12 @@ class network:
 if __name__ == "__main__":
 
     x, y, c = data.createData(0)
-    Data = concate2D(x, y)
+    Data = concate3D(x, y)
     
 
     # --- Experiment for 3.1 ---
     config = netConfig()
-    config.set(inputD = 2, outputD = 1, layer = 1, nodes = [1], lr = 0.01, mode = 0, batch = 1, \
+    config.set(inputD = 3, outputD = 1, layer = 1, nodes = [1], lr = 0.01, mode = 0, batch = 1, \
     maxIter = 100, active = noActive, activeDiff = noActiveDiff)
     
     # Delta Rule    
@@ -273,7 +279,7 @@ if __name__ == "__main__":
     data.showTrainProc(2, [trainProc1, trainProc2], ["Delta Rule", "Perceptron Rule"])
 
     
-    
+    '''
     # --- Experiment for 3.2 ---
     config = netConfig()
     config.set(inputD = 2, outputD = 1, layer = 2, nodes = [4, 1], lr = 0.03, mode = 2, batch = 15, \
@@ -292,11 +298,11 @@ if __name__ == "__main__":
     print (net.values[0])
     print (net.values[1])
 
-    '''
+
     data.scatter(x, y, c)
     net.draw()
     print (net.w)
-    '''
+
     
     
     trainProc = net.backward(Data, c)
@@ -306,3 +312,4 @@ if __name__ == "__main__":
     
     data.showTrainProc(1, [trainProc], ['test'])
     
+	'''

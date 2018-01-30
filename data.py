@@ -1,10 +1,29 @@
 import matplotlib.pyplot as plt
-import random, math
+import random, math, copy
 import numpy as np
 
 CHECK_INTERVAL = 10
 N = 100
 #np.random.seed(1000)
+
+def timeSeries():
+	t = [1.5]
+	for i in range(0, 1600):
+		tmp = 0.
+		if i - 25 >= 0:
+			tmp = t[i - 25]
+		t.append(t[i] + 0.2 * tmp / (1 + tmp ** 10) - 0.1 * t[i]);
+	X = []
+	y = []
+	for i in range(301, 1501):
+		X.append([t[i - 20], t[i - 15], t[i - 10], t[i - 5], t[i]])
+		y.append(t[i + 5])
+	combined = list(zip(X, y))
+	random.shuffle(combined)
+	X[:], y[:] = zip(*combined)
+	return t, X, y	
+
+
 
 def showTrainProc(n, results, labels):
 	x = []
@@ -91,6 +110,17 @@ def createData(kind):
 					y.append(temY)
 					c.append(1)
 					break					
+	if kind == 3:
+		# feed-forward
+		for i in range(8):
+			l = []
+			for j in range(8):
+				if i == j:
+					l.append(1)
+				else:
+					l.append(-1)
+			x.append(copy.copy(l))
+			y.append(copy.copy(l))
 	# shuffle
 	for i in range(20000):
 		id1 = random.randint(0, 2 * N - 1)
