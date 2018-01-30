@@ -10,25 +10,25 @@ np.random.seed(1000)
 def timeSeries():
     t = [1.5]
     for i in range(0, 1600):
-    	tmp = 0.
-    	if i - 25 >= 0:
-    		tmp = t[i - 25]
-    	t.append(t[i] + 0.2 * tmp / (1 + tmp ** 10) - 0.1 * t[i]);
+        tmp = 0.
+        if i - 25 >= 0:
+            tmp = t[i - 25]
+        t.append(t[i] + 0.2 * tmp / (1 + tmp ** 10) - 0.1 * t[i]);
     X = []
     y = []
     for i in range(301, 1501):
-    	X.append([t[i - 20], t[i - 15], t[i - 10], t[i - 5], t[i]])
-    	y.append(t[i + 5])
+        X.append([t[i - 20], t[i - 15], t[i - 10], t[i - 5], t[i]])
+        y.append(t[i + 5])
     combined = list(zip(X, y))
     random.shuffle(combined)
     X[:], y[:] = zip(*combined)
-    return t, X, y	
+    return t, X, y
 
 def showTrainProc(n, results, labels):
     x = []
     for i in range(len(results[0])):
         x.append(i * CHECK_INTERVAL + 1)
-        
+
     for i in range(n):
         plt.plot(x, results[i], label = labels[i])
     plt.legend()
@@ -60,7 +60,7 @@ def createData(kind):
     x = []
     y = []
     c = []
-    if kind == 0: 
+    if kind == 0:
         # linear seperable
         # Setting: class 0: (-5, 5)
         #          class 1: (5, -5)
@@ -109,22 +109,14 @@ def createData(kind):
                     x.append(temX)
                     y.append(temY)
                     c.append(1)
-                    break         
-    if kind == 3:
- 		# feed-forward
- 		for i in range(8):
- 			l = []
- 			for j in range(8):
- 				if i == j:
- 					l.append(1)
- 				else:
- 					l.append(-1)
- 			x.append(copy.copy(l))
- 			y.append(copy.copy(l))
+                    break
+
     # shuffle
+
     for i in range(20000):
         id1 = random.randint(0, 2 * N - 1)
         id2 = random.randint(0, 2 * N - 1)
+
         x[id1], x[id2] = x[id2], x[id1]
         y[id1], y[id2] = y[id2], y[id1]
         c[id1], c[id2] = c[id2], c[id1]
@@ -185,6 +177,9 @@ def createDataTest(kind):
                     y.append(temY)
                     c.append(1)
                     break
+    if kind == 4:
+        for i in range(n):
+            for j in range()
     # shuffle
     for i in range(20000):
         id1 = random.randint(0, 2 * n - 1)

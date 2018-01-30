@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import data, random, math, copy
+import data4, random, math, copy
 
 
 def noActive(x):
@@ -110,7 +110,8 @@ class network:
     def calLoss(self, x, y):
         count = 0.
         for i in range(len(x)):
-            count += 0.5 * (y[i] - self.forward(x[i])[0]) ** 2
+            for j in range(8):
+                count += 0.5 * (y[i][j] - self.forward(x[i])[j]) ** 2
         return count / len(x)
 
     def forward(self, inputData):
@@ -196,7 +197,7 @@ class network:
                     lastValue = self.values[self.config.layer - 1]
                     curInactiveValue = self.inactiveValues[self.config.layer - 1]
                     for i in range(self.config.outputD):
-                        lastDelta[i] = self.config.activeDiff(curInactiveValue[i]) * (lastValue[i] - y[index])
+                        lastDelta[i] = self.config.activeDiff(curInactiveValue[i]) * (lastValue[i] - y[index][i])
                     # Update layer by layer
                     for i in range(self.config.layer)[::-1]:
                         # update bias on layer i
@@ -235,9 +236,9 @@ class network:
                                    self.lastRoundBiasDelta[i] / self.config.batch * self.config.momentum
                 self.lastRoundDelta = delta
                 self.lastRoundBiasDelta = biasDelta
-                if it%(500) == 0:
-                    # data.scatter(np.array(x)[:, 0], np.array(x)[:, 1], y)
-                    self.draw('Back Propogation rule, iter ='+str(it))
+                # if it%(500) == 0:
+                #     # data.scatter(np.array(x)[:, 0], np.array(x)[:, 1], y)
+                #     self.draw('Back Propogation rule, iter ='+str(it))
         return trainProc, testProc
 
     def draw(self, label=None, pause=0.0000001):
@@ -273,10 +274,10 @@ class network:
         plt.pause(pause)
 
 if __name__ == "__main__":
-    x, y, c = data.createData(1)
-    Data = concate2D(x, y)
-    xx, yy, cc = data.createDataTest(1)
-    Data_test = concate2D(xx, yy)
+    Data, c = data.createData(3)
+    #Data = concate2D(x, y)
+    Data_test, cc = data.createDataTest(3)
+    #Data_test = concate2D(xx, yy)
     lineSet = []
 
     # --- Experiment for 3.1 ---
@@ -316,8 +317,8 @@ if __name__ == "__main__":
 
     # --- Experiment for 3.2 ---
     config = netConfig()
-    config.set(inputD=2, outputD=1, layer=2, nodes=[3, 1], lr=0.03, mode=2, batch=15, \
-               maxIter=25000, momentum=0.9, active=active, activeDiff=activeDiff, activeInv=activeInv)
+    config.set(inputD=8, outputD=8, layer=2, nodes=[3, 8], lr=0.03, mode=2, batch=1, \
+               maxIter=2500, momentum=0.9, active=active, activeDiff=activeDiff, activeInv=activeInv)
 
     # print (activeInv(config.active(10.)))
 
@@ -327,19 +328,36 @@ if __name__ == "__main__":
     # net.w[1] = np.array([[-4.7], [-1.0], [4.9], [-4.3], [0.096]])
 
 
-    print(net.forward([5., 5.]))
-    print(net.values[0])
-    print(net.values[1])
-    plt.show()
-    plt.ion()
-    data.scatter(x, y, c)
+    # plt.ion()
+    # data.scatter(x, y, c)
     trainProc, testProc = net.backward(Data, c, Data_test, cc)
 
     # data.scatter(x, y, c)
-    net.draw()
+    # net.draw()
     print(net.w)
-    plt.ioff()
-    plt.close('all')
-    data.showTrainProc(2, [trainProc, testProc], ['train', 'test'])
+    # plt.ioff()
+    # plt.close('all')
+    mu = [0., 0., 0.]
+    for i in range(8):
+        l = [-1 for j in range(8)]
+        l[i] = 1
+        net.forward(l)
+        #print (net.values[0])
+        for j in range(3):
+            mu[j] = mu[j] + net.values[0][j]
+
+
+    for i in range(8):
+        l = [-1 for j in range(8)]
+        l[i] = 1
+        net.forward(l)
+        # print (net.values[0])
+        for j in range(3):
+            if net.values[0][j] < mu[j] / 8:
+                print (1,end='')
+            else:
+                print (0,end='')
+        print ()
+    data.showTrainProc(1, [trainProc], ['train'])
     plt.show()
 

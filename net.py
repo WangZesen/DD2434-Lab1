@@ -37,8 +37,8 @@ def concate2D(x, y):
 
 class netConfig:
     def __init__(self):
-        self.lr = 0
-        self.mode = 0 # 0: Delta, 1: Perceptron, 2: BP
+        self.lr = 0         # learning rate
+        self.mode = 0       # 0: Delta, 1: Perceptron, 2: BP
         self.batch = 0
         self.layer = 0        
         self.inputD = 0     # input dimension
@@ -143,7 +143,7 @@ class network:
                     self.w[0][i][0] += delta[i] / self.config.batch
                 if it % data.CHECK_INTERVAL == 0:
                     trainProc.append(self.calError(x, y))
-                if it%20 == 0:
+                if it%(self.config.maxIter/10) == 0:
                     data.scatter(np.array(x)[:, 0], np.array(x)[:, 1], y)
                     self.draw('Delta rule, iter =' + str(it))
                     plt.close('all')
@@ -160,7 +160,7 @@ class network:
                     self.w[0][i][0] += delta[i] / self.config.batch
                 if it % data.CHECK_INTERVAL == 0:
                     trainProc.append(self.calError(x, y))
-                if it%20 == 0:
+                if it%(self.config.maxIter/10) == 0:
                     data.scatter(np.array(x)[:, 0], np.array(x)[:, 1], y)
                     self.draw('Perceptron rule, iter =' + str(it))
                     plt.close('all')
@@ -244,39 +244,42 @@ class network:
         if tag != None:
             plt.xlabel(tag)
         plt.show()
-        
+        # plt.savefig("cache/data-%.8d.png" % figCount)
+        # figCount += 1
+
 
         
 if __name__ == "__main__":
 
     x, y, c = data.createData(0)
     Data = concate3D(x, y)
-    
 
     # --- Experiment for 3.1 ---
     config = netConfig()
-    config.set(inputD = 3, outputD = 1, layer = 1, nodes = [1], lr = 0.01, mode = 0, batch = 1, \
-    maxIter = 100, active = noActive, activeDiff = noActiveDiff)
+    config.set(inputD=3, outputD=1, layer=1, nodes=[1], lr=0.01, mode=0, batch=1,
+               maxIter=500, active=noActive, activeDiff=noActiveDiff)
     
     # Delta Rule    
     net = network(config)    
     data.scatter(x, y, c)
-    net.draw()
+    net.draw('Delta rule Start')
     trainProc1 = net.backward(Data, c)
     data.scatter(x, y, c)
-    net.draw()
+    net.draw('Delta rule End')
+    data.showTrainProc(1, [trainProc1], ["Delta Rule"])
 
     
     # Perceptron Rule
-    config.set(mode = 1)
-    net1 = network(config)
-    data.scatter(x, y, c)
-    net1.draw()
-    trainProc2 = net1.backward(Data, c)
-    data.scatter(x, y, c)
-    net1.draw()
-    
-    data.showTrainProc(2, [trainProc1, trainProc2], ["Delta Rule", "Perceptron Rule"])
+    # config.set(mode = 1)
+    # net1 = network(config)
+    # data.scatter(x, y, c)
+    # net1.draw('Perceptron rule Start')
+    # trainProc2 = net1.backward(Data, c)
+    # data.scatter(x, y, c)
+    # net1.draw('Perceptron rule End')
+    #
+    # data.showTrainProc(1, [trainProc2], ["Perceptron Rule"])
+    # data.showTrainProc(2, [trainProc1, trainProc2], ["Delta Rule", "Perceptron Rule"])
 
     
     '''
@@ -299,17 +302,10 @@ if __name__ == "__main__":
     print (net.values[1])
 
 
-    data.scatter(x, y, c)
-    net.draw()
-    print (net.w)
-
-    
-    
     trainProc = net.backward(Data, c)
     data.scatter(x, y, c)
     net.draw()
     print (net.w)
     
     data.showTrainProc(1, [trainProc], ['test'])
-    
-	'''
+    '''
