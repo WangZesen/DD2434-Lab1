@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-import random, math
+import random, math, copy
 import numpy as np
 
 CHECK_INTERVAL = 10
@@ -91,6 +91,17 @@ def createData(kind):
 					y.append(temY)
 					c.append(1)
 					break					
+	if kind == 3:
+		# feed-forward
+		for i in range(8):
+			l = []
+			for j in range(8):
+				if i == j:
+					l.append(1)
+				else:
+					l.append(-1)
+			x.append(copy.copy(l))
+			y.append(copy.copy(l))
 	# shuffle
 	for i in range(20000):
 		id1 = random.randint(0, 2 * N - 1)
