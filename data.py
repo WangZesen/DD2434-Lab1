@@ -109,7 +109,18 @@ def createData(kind):
                     x.append(temX)
                     y.append(temY)
                     c.append(1)
-                    break                    
+                    break         
+    if kind == 3:
+ 		# feed-forward
+ 		for i in range(8):
+ 			l = []
+ 			for j in range(8):
+ 				if i == j:
+ 					l.append(1)
+ 				else:
+ 					l.append(-1)
+ 			x.append(copy.copy(l))
+ 			y.append(copy.copy(l))
     # shuffle
     for i in range(20000):
         id1 = random.randint(0, 2 * N - 1)
