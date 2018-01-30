@@ -111,7 +111,7 @@ class network:
         count = 0.
         for i in range(len(x)):
             count += 0.5 * (y[i] - self.forward(x[i])[0]) ** 2
-        return count
+        return count / len(x)
 
     def forward(self, inputData):
         self.inputData = copy.deepcopy(inputData)
@@ -135,6 +135,7 @@ class network:
     def backward(self, x, y, xx, yy):
         assert (self.config.batch <= len(y))
         trainProc = []
+        testProc = []
         if self.config.mode == 0:  # Delta rule (only for one layer and one output)
             for it in range(self.config.maxIter):
                 delta = [0 for col in range(self.config.inputD)]
@@ -151,6 +152,7 @@ class network:
                     self.w[0][i][0] += delta[i] / self.config.batch
                 if it % data.CHECK_INTERVAL == 0:
                     trainProc.append(self.calError(x, y))
+                    testProc.append(self.calError(xx, yy))
                 if it%(self.config.maxIter/50) == 0:
                     # data.scatter(np.array(x)[:, 0], np.array(x)[:, 1], y)
                     self.draw('Delta rule, iter ='+str(it))
@@ -168,6 +170,7 @@ class network:
                     self.w[0][i][0] += delta[i] / self.config.batch
                 if it % data.CHECK_INTERVAL == 0:
                     trainProc.append(self.calError(x, y))
+                    testProc.append(self.calError(xx, yy))
                 # if it%(self.config.maxIter/100) == 0:
                 if it % 1 == 0:
                     # data.scatter(np.array(x)[:, 0], np.array(x)[:, 1], y)
@@ -220,7 +223,7 @@ class network:
                         lastDelta = curDelta * np.dot(self.w[i], np.array([lastDelta]).T).reshape((curDim,))
                 if it % data.CHECK_INTERVAL == 0:
                     trainProc.append(self.calLoss(x, y))
-                    trainProc.append(self.calLoss(xx, yy))
+                    testProc.append(self.calLoss(xx, yy))
                 if (it + 1) % 2000 == 0:
                     #    #data.scatter2(x, y)
                     #    #self.draw()
@@ -232,10 +235,10 @@ class network:
                                    self.lastRoundBiasDelta[i] / self.config.batch * self.config.momentum
                 self.lastRoundDelta = delta
                 self.lastRoundBiasDelta = biasDelta
-                if it%(self.config.maxIter/200) == 0:
+                if it%(500) == 0:
                     # data.scatter(np.array(x)[:, 0], np.array(x)[:, 1], y)
                     self.draw('Back Propogation rule, iter ='+str(it))
-        return trainProc
+        return trainProc, testProc
 
     def draw(self, label=None, pause=0.0000001):
         # data.scatter(x, y, c)
@@ -316,7 +319,7 @@ if __name__ == "__main__":
     # --- Experiment for 3.2 ---
     config = netConfig()
     config.set(inputD=2, outputD=1, layer=2, nodes=[3, 1], lr=0.03, mode=2, batch=15, \
-               maxIter=250000, momentum=0.9, active=active, activeDiff=activeDiff, activeInv=activeInv)
+               maxIter=2500, momentum=0.9, active=active, activeDiff=activeDiff, activeInv=activeInv)
 
     # print (activeInv(config.active(10.)))
 
@@ -329,12 +332,16 @@ if __name__ == "__main__":
     print(net.forward([5., 5.]))
     print(net.values[0])
     print(net.values[1])
+    plt.show()
+    plt.ion()
     data.scatter(x, y, c)
-    trainProc = net.backward(Data, c, Data_test, cc)
+    trainProc, testProc = net.backward(Data, c, Data_test, cc)
+
     # data.scatter(x, y, c)
     net.draw()
     print(net.w)
-
-    data.showTrainProc(1, [trainProc], ['test'])
+    plt.ioff()
+    plt.close('all')
+    data.showTrainProc(2, [trainProc, testProc], ['train', 'test'])
     plt.show()
 
